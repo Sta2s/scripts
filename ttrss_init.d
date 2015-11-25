@@ -30,6 +30,7 @@ if [ "$FORKING" != "0" ]; then
    DAEMON_SCRIPT="update_daemon2.php"
 fi
 
+USER="www-data"
 DAEMON=/usr/bin/php
 DAEMON_ARGS="${TTRSS_PATH}/${DAEMON_SCRIPT}"
 DAEMON_DIR="${TTRSS_PATH}"
@@ -57,14 +58,19 @@ fi
 #
 do_start()
 {
+   if [ ! -f "$LOG" ]; then
+  	touch "$LOG"
+	chown "$USER" "$LOG"
+   fi
+
    # Return
    #   0 if daemon has been started
    #   1 if daemon was already running
    #   2 if daemon could not be started
-   start-stop-daemon --start --make-pidfile --background --quiet --chuid "www-data" --chdir "$DAEMON_DIR" --pidfile "$PIDFILE" --exec "$DAEMON" --test > /dev/null \
+   start-stop-daemon --start --make-pidfile --background --quiet --chuid "$USER" --chdir "$DAEMON_DIR" --pidfile "$PIDFILE" --exec "$DAEMON" --test > /dev/null \
       || return 1
 
-   start-stop-daemon --start --make-pidfile --background --quiet --chuid "www-data" --chdir "$DAEMON_DIR" --pidfile "$PIDFILE" --exec "$DAEMON" -- \
+   start-stop-daemon --start --make-pidfile --background --quiet --chuid "$USER" --chdir "$DAEMON_DIR" --pidfile "$PIDFILE" --exec "$DAEMON" -- \
       $DAEMON_ARGS --log $LOG \
       || return 2
    # Add code here, if necessary, that waits for the process to be ready
@@ -82,7 +88,7 @@ do_stop()
    #   1 if daemon was already stopped
    #   2 if daemon could not be stopped
    #   other if a failure occurred
-   start-stop-daemon --stop --make-pidfile --quiet --chuid "www-data" --retry=TERM/1/KILL/5 --pidfile $PIDFILE --name $NAME
+   start-stop-daemon --stop --make-pidfile --quiet --chuid "$USER" --retry=TERM/1/KILL/5 --pidfile $PIDFILE --name $NAME
    RETVAL="$?"
    [ "$RETVAL" = 2 ] && return 2
    # Wait for children to finish too if this is a daemon that forks
